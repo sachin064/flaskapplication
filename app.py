@@ -20,6 +20,14 @@ from util.db_adapter import DbAdapter
 
 q = Queue()
 
+
+import pymongo
+myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+
+mydb = myclient["mqtt_db"]
+
+############################################ mysql ########################################################
+
 ##### User configurable data section
 username = ""
 password = ""
@@ -194,14 +202,10 @@ def log_worker():
                 # data_query = "INSERT INTO " + \
                 #              Table_name + "(time,topic,sensor,message)VALUES(?,?,?,?)"
                 # # logger.Log_sensor(data_query, data_out)
-
+                mycol = mydb["mqtt_data"]
+                x = mycol.insert_one(data)
                 print(data_out)
-                table_data = json.loads(data_out[3])
-                if table_data["device"] == "PS1":
-                    dump_ps1_data(table_data)
-                elif table_data['device'] == 'PT1':
-                    dump_pt1_data(table_data)
-                    pass
+
             except Exception as e:
                 print("problem with logging ", e)
     # logger.conn.close()
@@ -212,20 +216,9 @@ def log_worker():
 ########################
 
 def dump_ps1_data(data):
-    db_connection = DbAdapter(DATABASE)
-    payload = {}
-    payload['location'] = data['location']
-    payload['device'] = data['device']
-    cnt = 1
-    for i in range(4):
-        payload['ph{}'.format(cnt)] = data['data'][i]['ph{}'.format(cnt)]
-        cnt += 1
-    print(payload)
-
-    db_connection.manipulate_record(
-        'INSERT INTO ps1(location,device,ph1,ph2,ph3,ph4) '
-        'VALUES (%s,%s,%s,%s,%s,%s)',
-        [tuple(payload.values())])
+    # db_connection = DbAdapter(DATABASE)
+    mycol = mydb["customers"]
+    x = mycol.insert_one(data)
 
 
 def dump_pt1_data(data):
